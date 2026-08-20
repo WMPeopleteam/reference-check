@@ -46,8 +46,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,sans-serif;backgrou
 .app{display:flex;height:100vh;overflow:hidden;}
 .sb{width:220px;background:var(--acc);display:flex;flex-direction:column;flex-shrink:0;}
 .sb-top{padding:18px 16px 15px;border-bottom:1px solid rgba(255,255,255,.1);display:grid;grid-template-columns:32px 1fr;column-gap:10px;align-items:center;}
-.sb-mark{width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;grid-row:1/3;}
-.sb-mark svg{width:17px;height:17px;fill:white;}
+.sb-mark{width:32px;height:32px;display:flex;align-items:center;justify-content:center;grid-row:1/3;}
+.sb-mark img{width:32px;height:auto;display:block;}
 .sb-name{font-size:13px;font-weight:700;color:#fff;line-height:1.25;}
 .sb-sub{font-size:10px;color:rgba(255,255,255,.42);margin-top:1px;}
 .sb-nav{padding:10px 8px;flex:1;overflow-y:auto;}
@@ -870,7 +870,7 @@ html,body{line-height:1.55;}
 <!-- ── 사이드바 ─────────────────────────────────────────── -->
 <aside class="sb">
   <div class="sb-top">
-    <div class="sb-mark"><svg viewBox="0 0 18 18"><path d="M9 1L17 4.5V9C17 13 13.5 16.5 9 17.5C4.5 16.5 1 13 1 9V4.5L9 1Z"/></svg></div>
+    <div class="sb-mark"><img src="woomi-ci-mark-white.png" alt="우미"></div>
     <div class="sb-name">Recruiting Hub</div>
     <div class="sb-sub">우미건설 피플팀</div>
   </div>
