@@ -380,6 +380,28 @@ textarea{resize:vertical;min-height:64px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 @media print{.sb,.topbar,.brow{display:none!important;}.toast-wrap{display:none;}.main{margin-left:0;}.content{padding:0;}}
 
+/* ── 추천서 면접 참고용 인쇄 시트 (A4 세로 1장 목표) ────────── */
+#print-referral-sheet{display:none;}
+@media print{
+  @page{size:A4 portrait;margin:14mm 12mm;}
+  body.printing-referral-sheet{background:#fff!important;}
+  body.printing-referral-sheet > *:not(#print-referral-sheet){display:none!important;}
+  body.printing-referral-sheet #print-referral-sheet{display:block!important;}
+}
+.ps-doc{font-family:'Malgun Gothic','Noto Sans KR',sans-serif;color:#111;font-size:11px;line-height:1.5;}
+.ps-head{border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px;}
+.ps-head h1{font-size:18px;margin:0 0 4px;}
+.ps-sub{font-size:11px;color:#444;}
+.ps-block{margin-bottom:9px;break-inside:avoid;}
+.ps-block h2{font-size:12px;margin:0 0 4px;padding-bottom:2px;border-bottom:1px solid #ccc;color:#111;}
+.ps-row{display:grid;grid-template-columns:112px 1fr;gap:6px;padding:2px 0;align-items:start;}
+.ps-k{color:#555;font-weight:700;}
+.ps-v{color:#111;word-break:break-word;}
+.ps-empty{color:#888;font-style:italic;}
+.ps-highlight{background:#f5f5f5;border-radius:4px;padding:8px 10px;}
+.ps-highlight h2{border-bottom:0;}
+.ps-foot{margin-top:12px;padding-top:6px;border-top:1px solid #ccc;font-size:9px;color:#888;text-align:right;}
+
 /* ════════════════════════════════════════════════════════════
    디자인 레이어 v2 — Cool Enterprise (JS·데이터 무변경, CSS 오버라이드만)
    되돌리려면 이 블록만 삭제하면 원본 디자인으로 복귀합니다.
@@ -2293,6 +2315,9 @@ html,body{line-height:1.55;}
 <!-- ── 토스트 ─────────────────────────────────────────────── -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
+<!-- ── 추천서 인쇄용 시트 (면접 참고용, 평소엔 숨김) ─────────── -->
+<div id="print-referral-sheet"></div>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // 전역 상태 변수
@@ -3584,17 +3609,29 @@ const FIXED_URLS = {
   interviewerUrl: 'https://script.google.com/macros/s/AKfycbxfjDh7tw6iVUI1uoC3WdBTEBl4M0FAMk6LPAb7jK5CWenYgD4Mpnd87e3ldDQ08_w3/exec', // 면접관 DB
   refAutoUrl:     'https://script.google.com/macros/s/AKfycbzCJNhQ0JMuCVYetPvJ_q6aE5JRhfWBBfvvrXVmm3Z81tUh8DgtCfzO-oXqQI6bY3az/exec', // 레퍼런스 자동화
   referralDataUrl:'',
+  // 사내추천(Referrals/Rewards/RefRules/Employees)은 referral_intake.html이 실제로 저장하는
+  // "사내추천관리" 스프레드시트에 바인딩된 스크립트를 봐야 한다. scriptUrl(지원자 DB)과는 다른 배포다.
+  referralScriptUrl: 'https://script.google.com/macros/s/AKfycbwIpEnb7CyaPeW3YneFp3XTt5-NOKK5ZL2jrptpW-sOsv0no-WivOtTQLSXOYF3HSfMZQ/exec', // 사내추천관리
 };
 
+// gsFetch가 scriptUrl 대신 referralScriptUrl로 라우팅해야 하는 시트 목록.
+// Interviewers는 별도의 interviewerUrl 경로를 이미 쓰고 있어 여기 포함하지 않는다.
+const REFERRAL_DATA_ROUTED_SHEETS = ['Referrals', 'Rewards', 'RefRules', 'Employees'];
+
 const GS_CONFIG = {
-  scriptUrl:      FIXED_URLS.scriptUrl,
-  interviewerUrl: FIXED_URLS.interviewerUrl,
-  refAutoUrl:     FIXED_URLS.refAutoUrl,
-  referralDataUrl:FIXED_URLS.referralDataUrl,
+  scriptUrl:         FIXED_URLS.scriptUrl,
+  interviewerUrl:    FIXED_URLS.interviewerUrl,
+  refAutoUrl:        FIXED_URLS.refAutoUrl,
+  referralDataUrl:   FIXED_URLS.referralDataUrl,
+  referralScriptUrl: FIXED_URLS.referralScriptUrl,
   adminToken:     'woomic-ats-admin-20260731-v1-change-this',
   // doPost를 우선 사용하고, 구형 배포본과의 호환을 위해 실패 시 GET 방식으로 재시도한다.
   usePostWrites:  true,
 };
+
+function gsBaseUrlForSheet_(sheet) {
+  return (REFERRAL_DATA_ROUTED_SHEETS.includes(sheet) && GS_CONFIG.referralScriptUrl) || GS_CONFIG.scriptUrl;
+}
 
 // GS에 저장하는 필드를 한 곳에서 관리한다. 새 필드는 시트 헤더에도 추가해야 한다.
 const GS_SCHEMA = {
@@ -3824,7 +3861,7 @@ async function flushGsRetryQueue() {
 
 async function gsFetch(action, sheet, data={}, options={}) {
   if(!GS_CONFIG.scriptUrl) return null;
-  const url = new URL(GS_CONFIG.scriptUrl);
+  const url = new URL(gsBaseUrlForSheet_(sheet));
   url.searchParams.set('action', action);
   url.searchParams.set('sheet', sheet);
   if(GS_CONFIG.adminToken) url.searchParams.set('adminToken', GS_CONFIG.adminToken);
@@ -3871,7 +3908,7 @@ function gsSendViaHiddenFrame(action, sheet, data={}) {
   if(!GS_CONFIG.scriptUrl) return Promise.resolve(false);
   return new Promise(resolve => {
     try {
-      const url = new URL(GS_CONFIG.scriptUrl);
+      const url = new URL(gsBaseUrlForSheet_(sheet));
       url.searchParams.set('action', action);
       url.searchParams.set('sheet', sheet);
       if(GS_CONFIG.adminToken) url.searchParams.set('adminToken', GS_CONFIG.adminToken);
@@ -7910,7 +7947,10 @@ function renderReferralDetail(r) {
   const items = parseReferralItems(r.refItems);
   return `<div class="referral-detail-grid">
     <div class="referral-box">
-      <h3>${esc(r.candName)} ${referralBadge(r.status)}</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <h3 style="margin:0">${esc(r.candName)} ${referralBadge(r.status)}</h3>
+        <button class="btn btn-xs" data-action="call" data-call="printReferralInterviewSheet('${esc(r.id)}')">🖨 면접 참고용 인쇄</button>
+      </div>
       <dl class="referral-meta">
         <dt>추천인</dt><dd>${esc(r.refName)} / ${esc(r.refEmail)} / ${esc(r.refDept)}</dd>
         <dt>추천 포지션</dt><dd>${esc(r.posText)} ${pos?`<span class="b bblue">${esc(pos.title)}</span>`:''}</dd>
@@ -7953,6 +7993,107 @@ function renderReferralDetail(r) {
     </div>
   </div>`;
 }
+function referralTrackLabelForPrint(track) {
+  return ({DIRECT_REFERRAL:'직접 경험 추천', PERSONAL_REFERRAL:'지인 추천', TALENT_INTRO:'인재 소개'}[track] || '추천·소개');
+}
+function psRow(label, valueHtml) {
+  if(!valueHtml) return '';
+  return `<div class="ps-row"><div class="ps-k">${esc(label)}</div><div class="ps-v">${valueHtml}</div></div>`;
+}
+function psText(value) {
+  const v = String(value||'').trim();
+  return v ? esc(v).replace(/\n/g,'<br>') : '<span class="ps-empty">응답 없음</span>';
+}
+function psObservationValue(items, id) {
+  const status = (items.observationStatus||{})[id];
+  if(status) return `<span class="ps-empty">${esc(status)}</span>`;
+  return psText(items[id]);
+}
+function formatReferralDateFull(value) {
+  const d = new Date(value || '');
+  if(Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric'});
+}
+function buildInterviewSheetHtml(r) {
+  const items = parseReferralItems(r.refItems);
+  const track = items.referralTrack || (items.entryType === 'INTRODUCTION' ? 'TALENT_INTRO' : 'DIRECT_REFERRAL');
+  const isDirect = track === 'DIRECT_REFERRAL';
+  const isPersonal = track === 'PERSONAL_REFERRAL';
+  const isIntro = track === 'TALENT_INTRO';
+
+  const relationRows = [
+    psRow('알게 된 계기', (items.workTypes || []).map(esc).join('<br>')),
+    isDirect ? psRow('같이 한 일', psText(items.workTask)) : '',
+    isDirect && (items.workPeriodStart || items.workPeriodEnd) ? psRow('같이 일한 기간', `${esc(items.workPeriodStart || '-')} ~ ${esc(items.workPeriodEnd || '-')}`) : '',
+    isPersonal ? psRow('알고 지낸 기간', esc(items.personalKnownPeriod || '-')) : '',
+    isPersonal ? psRow('어떤 사이', esc(items.personalRelationType || '-')) : '',
+    isPersonal ? psRow('최근 교류 여부', esc(items.recentContact || '-')) : '',
+    psRow('가족·친족 여부', (items.conflictTypes || []).includes('친족') ? `예 (${esc(items.conflictDetail || '-')})` : '아니요')
+  ].join('');
+
+  const observationRows = isDirect ? [
+    psRow('강점 유형', (items.jobStrengthTypes || []).map(esc).join(', ')),
+    psRow('특히 잘한다고 느낀 점', psText(items.jobStrength)),
+    psRow('다시 함께 일한다면 맡기고 싶은 역할', psObservationValue(items, 'performanceCredit')),
+    psRow('기억에 남는 행동·상황', psObservationValue(items, 'proactiveCompletion')),
+    psRow('주변에서 주로 맡기던 일·역할', items.conflictHandlingEscapeReason ? `<span class="ps-empty">${esc(items.conflictHandlingEscapeReason)}</span>` : psText(items.conflictHandling))
+  ].join('') : isPersonal ? [
+    psRow('부탁하거나 도움을 요청한 일', psObservationValue(items, 'personalHelpAsked')),
+    psRow('모임·활동에서의 역할', psObservationValue(items, 'personalGroupRole'))
+  ].join('') : [
+    psRow('알게 된 경로·맥락', psText(items.introReason)),
+    psRow('알고 있는 경력·전문 분야', psText(items.knownCareer))
+  ].join('');
+
+  const guideBlock = !isIntro ? `<div class="ps-block"><h2>회사·직무 안내 확인</h2>
+    ${psRow('회사·직무 안내 여부', esc(items.companyGuideStatus || '-'))}
+    ${psRow('지원 의향 확인', esc(items.candidateIntentStatus || '-'))}
+  </div>` : '';
+
+  return `
+    <div class="ps-doc">
+      <div class="ps-head">
+        <h1>${esc(r.candName || '후보자')} 면접 참고 시트</h1>
+        <div class="ps-sub">${esc(r.posText || '포지션 미지정')} · ${referralTrackLabelForPrint(track)} · ${esc(referralStatusLabel(r.status))}</div>
+      </div>
+      <div class="ps-block">
+        <h2>기본 정보</h2>
+        ${psRow('추천인', `${esc(r.refName || '-')} (${esc(r.refDept || '-')})`)}
+        ${psRow('접수일', formatReferralDateFull(r.submittedAt))}
+      </div>
+      <div class="ps-block">
+        <h2>관계</h2>
+        ${relationRows}
+      </div>
+      <div class="ps-block ps-highlight">
+        <h2>${isIntro ? '소개' : '추천'} 이유</h2>
+        <div class="ps-v">${psText(items.recommendationReason)}</div>
+      </div>
+      <div class="ps-block">
+        <h2>${isIntro ? '인재 소개 정보' : isPersonal ? '알고 지내며 본 모습' : '함께 일하며 본 모습'}</h2>
+        ${observationRows}
+      </div>
+      ${guideBlock}
+      <div class="ps-block">
+        <h2>미리 알아두면 좋을 점</h2>
+        <div class="ps-v">${psObservationValue(items, 'improvementPoint')}</div>
+      </div>
+      <div class="ps-foot">본 문서는 사내추천·소개 접수 내용을 면접 참고용으로 출력한 것입니다. · 출력일 ${new Date().toLocaleDateString('ko-KR')}</div>
+    </div>
+  `;
+}
+function printReferralInterviewSheet(id) {
+  const r = referrals.find(x => String(x.id) === String(id));
+  if(!r) { toast('추천 건을 찾을 수 없습니다.'); return; }
+  const sheet = document.getElementById('print-referral-sheet');
+  if(!sheet) return;
+  sheet.innerHTML = buildInterviewSheetHtml(r);
+  document.body.classList.add('printing-referral-sheet');
+  window.print();
+}
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-referral-sheet');
+});
 function renderReferralRewardRows(refId) {
   const rows = referralRewards(refId);
   if(!rows.length) return '<div class="referral-empty">입사 상태 저장 후 3M/6M 포상금이 자동 생성됩니다.</div>';
@@ -10259,7 +10400,7 @@ const DELEGATED_CALLS = Object.freeze({
   markRefRegistered, markRefResponse, moveRecruitPlanDraft, nav, navBtn, nextCollectSend, nohirePosition, onPosLocationChange, openAddCand, openAddPosition, openAddTeam, openBulkAddCand, openRecruitPlanModal,
   openCollectSlots, openIntResult, openInterviewNoticeFlow, openPosDetail, openPositionResultModal, openPositionRoundSchedule, openReferralDraft, quickNotify, rejectCandidate,
   remindOneRef, remindRef, removePanelist, removeRecruitPlanDraft, renderActivityLog, renderIntTable, renderNotifyLog, renderReference, renderRefReport, renderTracker, reopenPosition, requestPositionReferences,
-  posdetailClosePos, posdetailDeletePos, posdetailStopPos, purgeExpiredPii, renderExpiredPii, renderReferralSection, renderTeamMaster, requestStageChange, resetIdleLock, saveNewTeam, savePosition, savePositionResults, saveRecruitPlanModal, saveRefReport, saveReferralDraft, saveReferralEmployee, saveReferralStatus, selectPositionResult, selectReferral, setInterviewPositionFilter, setPrivacyMaskFromControl, setReferralView, setRpLocation, setRpYear, setRsYear, setTrackerPage, snapTo10,
+  posdetailClosePos, posdetailDeletePos, posdetailStopPos, printReferralInterviewSheet, purgeExpiredPii, renderExpiredPii, renderReferralSection, renderTeamMaster, requestStageChange, resetIdleLock, saveNewTeam, savePosition, savePositionResults, saveRecruitPlanModal, saveRefReport, saveReferralDraft, saveReferralEmployee, saveReferralStatus, selectPositionResult, selectReferral, setInterviewPositionFilter, setPrivacyMaskFromControl, setReferralView, setRpLocation, setRpYear, setRsYear, setTrackerPage, snapTo10,
   exportReferralRewardsCsv, finishRejectReason, runCoreDiagnosticsUI,
   refreshOnboardingDeptRecipients, saveSettings, searchRecruitPlanTargets, selectRefCand, selectRefPosition, selectTemplateEditor, sendBulk, sendCollectSlots, sendCurrentOnboardInternal, sendIntById, sendIntNotify,
   sendAllCandSchedule, sendInterviewNoticeCandidates, sendInterviewNoticePanel, sendJoinNotice, sendObById, sendObNotify, sendPanelNotice, sendRefRequest, setDashPipeFilter, setRefFilter, showUnlinkedList, scrollPositionDetail,
