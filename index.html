@@ -3790,25 +3790,26 @@ function getGsChangeCursors() {
   catch(e) { return {}; }
 }
 
-function getGsChangeCursor() {
-  const value = getGsChangeCursors()[GS_CONFIG.scriptUrl];
+function getGsChangeCursor(baseUrl) {
+  const value = getGsChangeCursors()[baseUrl || GS_CONFIG.scriptUrl];
   return value === undefined || value === null || value === '' ? null : Number(value);
 }
 
-function setGsChangeCursor(cursor) {
+function setGsChangeCursor(cursor, baseUrl) {
   const next = Number(cursor);
   if(!Number.isFinite(next) || next < 0) return;
+  const key = baseUrl || GS_CONFIG.scriptUrl;
   const cursors = getGsChangeCursors();
-  const current = Number(cursors[GS_CONFIG.scriptUrl]);
+  const current = Number(cursors[key]);
   if(!Number.isFinite(current) || next >= current) {
-    cursors[GS_CONFIG.scriptUrl] = next;
+    cursors[key] = next;
     localStorage.setItem(GS_CHANGE_CURSOR_KEY, JSON.stringify(cursors));
   }
 }
 
-function clearGsChangeCursor() {
+function clearGsChangeCursor(baseUrl) {
   const cursors = getGsChangeCursors();
-  delete cursors[GS_CONFIG.scriptUrl];
+  delete cursors[baseUrl || GS_CONFIG.scriptUrl];
   localStorage.setItem(GS_CHANGE_CURSOR_KEY, JSON.stringify(cursors));
 }
 
@@ -3957,14 +3958,14 @@ async function gsGetAllResult(sheet, options={}) {
   return request;
 }
 
-async function gsGetChanges(cursor, limit=500, maxPages=20) {
+async function gsGetChanges(cursor, limit=500, maxPages=20, sheet='Candidates') {
   let nextCursor = Number(cursor) || 0;
   let latestCursor = nextCursor;
   let serverTime = '';
   const changes = [];
 
   for(let page=0; page<maxPages; page++) {
-    const result = await gsFetch('getChanges', 'Candidates', {}, {query:{cursor:nextCursor, limit}});
+    const result = await gsFetch('getChanges', sheet, {}, {query:{cursor:nextCursor, limit}});
     if(result == null || result.error) return null;
     if(result.resyncRequired === true) {
       return {
@@ -4358,6 +4359,44 @@ async function syncCoreFromGS(options={}) {
     }
   }
   showSyncStatus('Google Sheets 전체 동기화 완료', 'ok');
+  return true;
+}
+
+// 사내추천(Referrals/Rewards/RefRules/Employees)은 별도 스프레드시트(referralScriptUrl)에 있어서
+// syncCoreFromGS의 변경사항 폴링(커서 기반, Candidates 스프레드시트 전용)만으로는 새 추천 접수가
+// 잡히지 않는다. 같은 커서/델타 방식을 referralScriptUrl 기준으로 별도 실행한다.
+async function syncReferralCoreFromGS(options={}) {
+  if(!GS_CONFIG.referralScriptUrl) return true;
+  const baseUrl = GS_CONFIG.referralScriptUrl;
+  const cursor = options.forceFull ? null : getGsChangeCursor(baseUrl);
+  if(cursor !== null) {
+    const delta = await gsGetChanges(cursor, 500, 20, 'Referrals');
+    if(delta && Number.isFinite(delta.cursor)) {
+      if(delta.resyncRequired) {
+        clearGsChangeCursor(baseUrl);
+        return syncReferralCoreFromGS({forceFull:true});
+      }
+      applyGsChanges(delta.changes);
+      setGsChangeCursor(delta.cursor, baseUrl);
+      return true;
+    }
+    clearGsChangeCursor(baseUrl);
+  }
+
+  const baseline = await gsFetch('getCursor', 'Referrals');
+  const loaded = await Promise.all([
+    loadReferralsFromGS({forceFull:true,force:true}),
+    loadEmployeesFromGS({forceFull:true,force:true}),
+  ]);
+  if(!loaded.every(Boolean)) return false;
+  if(baseline && Number.isFinite(Number(baseline.cursor))) {
+    setGsChangeCursor(baseline.cursor, baseUrl);
+    const catchup = await gsGetChanges(Number(baseline.cursor), 500, 20, 'Referrals');
+    if(catchup && Number.isFinite(catchup.cursor)) {
+      applyGsChanges(catchup.changes);
+      setGsChangeCursor(catchup.cursor, baseUrl);
+    }
+  }
   return true;
 }
 
@@ -10614,6 +10653,7 @@ try {
     if(FIXED_URLS.referralDataUrl) GS_CONFIG.referralDataUrl = FIXED_URLS.referralDataUrl;
     if(FIXED_URLS.interviewerUrl) GS_CONFIG.interviewerUrl = FIXED_URLS.interviewerUrl;
     if(FIXED_URLS.refAutoUrl)     GS_CONFIG.refAutoUrl     = FIXED_URLS.refAutoUrl;
+    if(FIXED_URLS.referralScriptUrl) GS_CONFIG.referralScriptUrl = FIXED_URLS.referralScriptUrl;
     // 지원자 데이터 로드 (GS 우선, 실패 시 localStorage 캐시 유지)
     if(GS_CONFIG.scriptUrl) {
       loadAuxStateFromGS().then(loaded => {
@@ -10629,6 +10669,10 @@ try {
       }).catch(() => {
         showSyncStatus('⚠ GS 연결 실패 — 로컬 캐시로 표시 중 (네트워크 확인)', 'warn');
       });
+      // 사내추천은 별도 스프레드시트라 위 syncCoreFromGS 커서 폴링에 안 잡힘 — 따로 동기화
+      syncReferralCoreFromGS().then(loaded => {
+        if(loaded) { renderReferralSection(); updateMetrics(); }
+      }).catch(() => {});
     } else {
       auxSyncSuspended = false;
       showSyncStatus('⚠ GS 미연결 — 로컬 캐시로만 동작 (데이터 영구 저장 안 됨)', 'warn');
