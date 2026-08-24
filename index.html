@@ -7956,7 +7956,6 @@ function setReferralView(view) {
   renderReferralSection();
 }
 function renderReferralSection() {
-  ensureDefaultReferralRules();
   recalculateReferralFlags();
   expireReferralStatuses();
   updateReferralKpis();
@@ -8073,9 +8072,9 @@ function buildInterviewSheetHtml(r) {
   const observationRows = isDirect ? [
     psRow('강점 유형', (items.jobStrengthTypes || []).map(esc).join(', ')),
     psRow('특히 잘한다고 느낀 점', psText(items.jobStrength)),
-    psRow('다시 함께 일한다면 맡기고 싶은 역할', psObservationValue(items, 'performanceCredit')),
-    psRow('기억에 남는 행동·상황', psObservationValue(items, 'proactiveCompletion')),
-    psRow('주변에서 주로 맡기던 일·역할', items.conflictHandlingEscapeReason ? `<span class="ps-empty">${esc(items.conflictHandlingEscapeReason)}</span>` : psText(items.conflictHandling))
+    psRow('강점이 드러난 행동·사례', psText(items.performanceCredit)),
+    psRow('주변에서 주로 맡기던 일·역할', items.conflictHandlingEscapeReason ? `<span class="ps-empty">${esc(items.conflictHandlingEscapeReason)}</span>` : psText(items.conflictHandling)),
+    psRow('보완하면 좋을 점', psObservationValue(items, 'watchPoint'))
   ].join('') : isPersonal ? [
     psRow('부탁하거나 도움을 요청한 일', psObservationValue(items, 'personalHelpAsked')),
     psRow('모임·활동에서의 역할', psObservationValue(items, 'personalGroupRole'))
@@ -8113,10 +8112,6 @@ function buildInterviewSheetHtml(r) {
         ${observationRows}
       </div>
       ${guideBlock}
-      <div class="ps-block">
-        <h2>미리 알아두면 좋을 점</h2>
-        <div class="ps-v">${psObservationValue(items, 'improvementPoint')}</div>
-      </div>
       <div class="ps-foot">본 문서는 사내추천·소개 접수 내용을 면접 참고용으로 출력한 것입니다. · 출력일 ${new Date().toLocaleDateString('ko-KR')}</div>
     </div>
   `;
@@ -8506,23 +8501,28 @@ function refreshEmployeesFromGS() {
 function parseReferralItems(raw) { try { return JSON.parse(raw||'{}') || {}; } catch(e) { return {recommendationReason:String(raw||'')}; } }
 function referralItemLabel(key) {
   return ({
-    entryType:'유형', workTypes:'후보자를 알게 된 관계', workTask:'같이 한 일',
+    entryType:'유형', workTypes:'후보자와의 관계', workTask:'같이 한 일',
     workPeriodStart:'같이 일한 시작', workPeriodEnd:'같이 일한 종료',
+    personalKnownPeriod:'알고 지낸 기간', personalRelationType:'어떤 사이',
+    recentContact:'최근 교류 여부',
     candStatus:'후보자 현재 상황', conflictTypes:'가족·친족 여부', conflictDetail:'가족·친족 관계',
-    observationStatus:'볼 기회 없음',
-    performanceCredit:'성과가 났을 때', unknownHandling:'모르는 일이 있을 때',
-    mistakeHandling:'실수나 문제가 생겼을 때', feedbackHandling:'반대 의견이나 지적을 받았을 때',
-    conflictHandling:'의견이 다른 사람과 일할 때', proactiveCompletion:'스스로 시작하고 마무리한 경험',
     jobStrengthTypes:'잘한다고 느낀 점 유형', jobStrength:'잘한다고 느낀 점',
-    improvementPoint:'미리 알았으면 좋았을 점',
-    difficultSituation:'특히 어려워했던 상황',
-    helpfulSupport:'도움이 됐던 지원·업무 방식',
-    introReason:'이 분을 떠올리신 이유',
-    knownCareer:'알고 계신 경력·전문 분야', referenceSourceStatus:'같이 일해 보신 분 여부',
-    referenceSourceInfo:'해당 인물 정보', relationshipContext:'후보자를 알게 된 맥락과 보증 근거',
-    strengths:'강점과 직무 적합성', collaborationEvidence:'협업 방식과 사례', riskNotes:'우려사항',
+    performanceCredit:'강점이 드러난 행동·사례',
+    conflictHandling:'주변에서 맡기거나 부탁한 일·역할',
+    watchPoint:'보완하면 좋을 점',
+    personalHelpAsked:'부탁하거나 도움을 요청한 일',
+    personalGroupRole:'모임·활동에서의 역할',
+    introReason:'알게 된 경로·맥락',
+    knownCareer:'알고 있는 경력·전문 분야',
     recommendationReason:'추천 사유', guaranteeConfirmed:'후보자 동의 확인',
-    directExperienceConfirmed:'내용 출처 구분 확인', conflictConfirmed:'가족·친족 사실 확인'
+    directExperienceConfirmed:'내용 출처 구분 확인', conflictConfirmed:'가족·친족 사실 확인',
+    // 구버전(현재 접수 화면에서 더 이상 쓰이지 않음) 필드 — 과거 제출 건 표시용으로만 유지
+    unknownHandling:'모르는 일이 있을 때', mistakeHandling:'실수나 문제가 생겼을 때',
+    feedbackHandling:'반대 의견이나 지적을 받았을 때', proactiveCompletion:'스스로 시작하고 마무리한 경험',
+    improvementPoint:'미리 알았으면 좋았을 점', difficultSituation:'특히 어려워했던 상황',
+    helpfulSupport:'도움이 됐던 지원·업무 방식', referenceSourceStatus:'같이 일해 보신 분 여부',
+    referenceSourceInfo:'해당 인물 정보', relationshipContext:'후보자를 알게 된 맥락과 보증 근거',
+    strengths:'강점과 직무 적합성', collaborationEvidence:'협업 방식과 사례', riskNotes:'우려사항'
   }[key] || key);
 }
 function formatReferralItemValue(value) {
@@ -8533,23 +8533,33 @@ function formatReferralItemValue(value) {
 function renderReferralItemLine(items, key) {
   const value = items[key];
   if(value === undefined || value === null || value === '' || Array.isArray(value) && !value.length) return '';
+  if(value && typeof value === 'object' && !Array.isArray(value) && !Object.values(value).some(Boolean)) return '';
   return `<p style="font-size:12px;margin-top:8px;line-height:1.55"><b>${esc(referralItemLabel(key))}</b><br>${formatReferralItemValue(value)}</p>`;
 }
 function renderReferralItemsSummary(items) {
   const entryType = items.entryType === 'INTRODUCTION' ? '인재 소개서' : '사내추천서';
-  const scopeKeys = ['workTypes','workTask','workPeriodStart','workPeriodEnd','candStatus','conflictTypes','conflictDetail'];
-  const referralKeys = ['observationStatus','performanceCredit','unknownHandling','mistakeHandling','feedbackHandling','conflictHandling','proactiveCompletion','jobStrengthTypes','jobStrength','improvementPoint','difficultSituation','helpfulSupport'];
-  const introKeys = ['introReason','knownCareer','referenceSourceStatus','referenceSourceInfo'];
+  const track = items.referralTrack;
+  const isPersonal = track === 'PERSONAL_REFERRAL';
+  const isIntro = items.entryType === 'INTRODUCTION' || track === 'TALENT_INTRO';
+  const scopeKeys = isPersonal
+    ? ['workTypes','personalKnownPeriod','personalRelationType','recentContact','candStatus','conflictTypes','conflictDetail']
+    : ['workTypes','workTask','workPeriodStart','workPeriodEnd','candStatus','conflictTypes','conflictDetail'];
+  const mainKeys = isIntro
+    ? ['introReason','knownCareer']
+    : isPersonal
+      ? ['personalHelpAsked','personalGroupRole']
+      : ['jobStrengthTypes','jobStrength','performanceCredit','conflictHandling','watchPoint'];
   const confirmKeys = ['guaranteeConfirmed','directExperienceConfirmed','conflictConfirmed'];
-  const legacyKeys = ['relationshipContext','strengths','collaborationEvidence','riskNotes','recommendationReason'];
-  const mainKeys = items.entryType === 'INTRODUCTION' ? introKeys : referralKeys;
-  const legacy = mainKeys.some(k=>items[k]) ? [] : legacyKeys;
+  // 구버전 스키마로 제출된 과거 건(현재 필드가 전부 비어있을 때만) 대비용 표시
+  const ancientKeys = ['unknownHandling','mistakeHandling','feedbackHandling','proactiveCompletion','improvementPoint','difficultSituation','helpfulSupport','referenceSourceStatus','referenceSourceInfo','relationshipContext','strengths','collaborationEvidence','riskNotes'];
+  const ancient = mainKeys.some(k=>items[k]) ? [] : ancientKeys;
   return `
     <div class="b ${items.entryType==='INTRODUCTION'?'bamber':'bblue'}" style="margin:4px 0 6px">${entryType}</div>
     ${scopeKeys.map(k=>renderReferralItemLine(items,k)).join('')}
     ${mainKeys.map(k=>renderReferralItemLine(items,k)).join('')}
+    ${renderReferralItemLine(items,'recommendationReason')}
     ${confirmKeys.map(k=>renderReferralItemLine(items,k)).join('')}
-    ${legacy.map(k=>renderReferralItemLine(items,k)).join('')}
+    ${ancient.map(k=>renderReferralItemLine(items,k)).join('')}
   ` || '<div class="referral-empty">표시할 추천서 내용이 없습니다.</div>';
 }
 
