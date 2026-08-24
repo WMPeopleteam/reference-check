@@ -8526,7 +8526,7 @@ function referralItemLabel(key) {
   }[key] || key);
 }
 function formatReferralItemValue(value) {
-  if(Array.isArray(value)) return value.length ? value.map(esc).join('<br>') : '-';
+  if(Array.isArray(value)) return value.length ? value.map(esc).join(', ') : '-';
   if(value && typeof value === 'object') return Object.entries(value).filter(([,v])=>v).map(([k,v])=>`${esc(referralItemLabel(k))}: ${esc(v)}`).join('<br>') || '-';
   return esc(value || '-');
 }
@@ -8535,6 +8535,12 @@ function renderReferralItemLine(items, key) {
   if(value === undefined || value === null || value === '' || Array.isArray(value) && !value.length) return '';
   if(value && typeof value === 'object' && !Array.isArray(value) && !Object.values(value).some(Boolean)) return '';
   return `<p style="font-size:12px;margin-top:8px;line-height:1.55"><b>${esc(referralItemLabel(key))}</b><br>${formatReferralItemValue(value)}</p>`;
+}
+function renderConfirmChecksLine(items, keys) {
+  const checked = keys.filter(k => items[k]);
+  if(!checked.length) return '';
+  const chips = checked.map(k => `<span style="color:var(--green)">✓ ${esc(referralItemLabel(k))}</span>`).join('<span style="color:var(--muted);margin:0 6px">·</span>');
+  return `<p style="font-size:12px;margin-top:8px">${chips}</p>`;
 }
 function renderReferralItemsSummary(items) {
   const entryType = items.entryType === 'INTRODUCTION' ? '인재 소개서' : '사내추천서';
@@ -8558,7 +8564,7 @@ function renderReferralItemsSummary(items) {
     ${scopeKeys.map(k=>renderReferralItemLine(items,k)).join('')}
     ${mainKeys.map(k=>renderReferralItemLine(items,k)).join('')}
     ${renderReferralItemLine(items,'recommendationReason')}
-    ${confirmKeys.map(k=>renderReferralItemLine(items,k)).join('')}
+    ${renderConfirmChecksLine(items, confirmKeys)}
     ${ancient.map(k=>renderReferralItemLine(items,k)).join('')}
   ` || '<div class="referral-empty">표시할 추천서 내용이 없습니다.</div>';
 }
