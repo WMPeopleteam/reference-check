@@ -8542,14 +8542,28 @@ function renderConfirmChecksLine(items, keys) {
   const chips = checked.map(k => `<span style="color:var(--green)">✓ ${esc(referralItemLabel(k))}</span>`).join('<span style="color:var(--muted);margin:0 6px">·</span>');
   return `<p style="font-size:12px;margin-top:8px">${chips}</p>`;
 }
+function renderPeriodRangeLine(items, startKey, endKey, label) {
+  const start = items[startKey], end = items[endKey];
+  if(!start && !end) return '';
+  return `<p style="font-size:12px;margin-top:8px;line-height:1.55"><b>${esc(label)}</b><br>${esc(start||'-')} ~ ${esc(end||'-')}</p>`;
+}
+function renderCandStatusLine(items) {
+  const parts = [];
+  if(items.candStatus) parts.push(esc(items.candStatus));
+  const conflictValues = Array.isArray(items.conflictTypes) ? items.conflictTypes : [];
+  if(conflictValues.includes('친족')) parts.push(`친족 (${esc(items.conflictDetail || '관계 미기재')})`);
+  else if(conflictValues.length) parts.push(esc(conflictValues[0]));
+  if(!parts.length) return '';
+  return `<p style="font-size:12px;margin-top:8px;color:var(--muted)">${parts.join('<span style="margin:0 6px">·</span>')}</p>`;
+}
 function renderReferralItemsSummary(items) {
   const entryType = items.entryType === 'INTRODUCTION' ? '인재 소개서' : '사내추천서';
   const track = items.referralTrack;
   const isPersonal = track === 'PERSONAL_REFERRAL';
   const isIntro = items.entryType === 'INTRODUCTION' || track === 'TALENT_INTRO';
   const scopeKeys = isPersonal
-    ? ['workTypes','personalKnownPeriod','personalRelationType','recentContact','candStatus','conflictTypes','conflictDetail']
-    : ['workTypes','workTask','workPeriodStart','workPeriodEnd','candStatus','conflictTypes','conflictDetail'];
+    ? ['workTypes','personalKnownPeriod','personalRelationType','recentContact']
+    : ['workTypes','workTask'];
   const mainKeys = isIntro
     ? ['introReason','knownCareer']
     : isPersonal
@@ -8562,6 +8576,8 @@ function renderReferralItemsSummary(items) {
   return `
     <div class="b ${items.entryType==='INTRODUCTION'?'bamber':'bblue'}" style="margin:4px 0 6px">${entryType}</div>
     ${scopeKeys.map(k=>renderReferralItemLine(items,k)).join('')}
+    ${!isPersonal ? renderPeriodRangeLine(items,'workPeriodStart','workPeriodEnd','같이 일한 기간') : ''}
+    ${renderCandStatusLine(items)}
     ${mainKeys.map(k=>renderReferralItemLine(items,k)).join('')}
     ${renderReferralItemLine(items,'recommendationReason')}
     ${renderConfirmChecksLine(items, confirmKeys)}
