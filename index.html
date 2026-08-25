@@ -1302,7 +1302,7 @@ html,body{line-height:1.55;}
         <div class="referral-layout">
           <aside>
             <div class="fgrid" style="grid-template-columns:1fr 110px 120px;margin-bottom:10px">
-              <input id="rf-search" placeholder="추천인·후보·포지션 검색" data-oninput="renderReferralSection()">
+              <input id="rf-search" placeholder="검색" data-oninput="renderReferralSection()">
               <select id="rf-dup-filter" data-onchange="renderReferralSection()">
                 <option value="">전체 플래그</option>
                 <option value="중복추천">중복추천</option>
@@ -7984,7 +7984,7 @@ function renderReferralDetail(r) {
   return `<div class="referral-detail-grid">
     <div class="referral-box">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-        <h3 style="margin:0">${esc(r.candName)} ${referralBadge(r.status)}</h3>
+        <h3 style="margin:0;display:flex;align-items:center;gap:6px">${esc(r.candName)}${referralBadge(r.status)}</h3>
         <button class="btn btn-xs" data-action="call" data-call="printReferralInterviewSheet('${esc(r.id)}')">🖨 면접 참고용 인쇄</button>
       </div>
       <dl class="referral-meta">
