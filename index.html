@@ -398,8 +398,6 @@ textarea{resize:vertical;min-height:64px;}
 .ps-k{color:#555;font-weight:700;}
 .ps-v{color:#111;word-break:break-word;}
 .ps-empty{color:#888;font-style:italic;}
-.ps-highlight{background:#f5f5f5;border-radius:4px;padding:8px 10px;}
-.ps-highlight h2{border-bottom:0;}
 .ps-foot{margin-top:12px;padding-top:6px;border-top:1px solid #ccc;font-size:9px;color:#888;text-align:right;}
 
 /* ════════════════════════════════════════════════════════════
@@ -7972,8 +7970,8 @@ function renderReferralInboxView() {
   const visibleRows = rows.slice(0, 100);
   list.innerHTML = rows.length ? visibleRows.map(r=>`
     <button class="referral-item ${String(selectedReferralId)===String(r.id)?'on':''}" data-action="call" data-call="selectReferral('${esc(r.id)}')">
-      <div class="referral-item-title"><span>${esc(r.candName||'후보 미입력')}</span><span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${referralBadge(r.status)}${referralDupBadge(r)}${referralElapsedBadge(r)}${referralAttachmentBadge(r)}</span></div>
-      <div class="referral-item-sub">${esc(r.refName||'-')} · ${esc(r.posText||'-')}<br>${formatReferralDate(r.submittedAt)} 접수 · ${esc(r.refDept||'-')}</div>
+      <div class="referral-item-title"><span>${esc(r.candName||'후보 미입력')} · ${esc(r.posText||'-')}</span><span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${referralBadge(r.status)}${referralDupBadge(r)}${referralElapsedBadge(r)}${referralAttachmentBadge(r)}</span></div>
+      <div class="referral-item-sub">${esc(r.refName||'-')} · ${esc(r.refDept||'-')}<br>${formatReferralDate(r.submittedAt)} 접수</div>
     </button>`).join('') + (rows.length > visibleRows.length ? `<div class="referral-empty">상위 100건만 표시 중입니다. 검색 또는 필터로 범위를 좁혀주세요. (${rows.length}건)</div>` : '') : '<div class="referral-empty">추천 접수 건이 없습니다.</div>';
   if(!selectedReferralId && rows[0]) selectedReferralId = rows[0].id;
   const selected = referrals.find(r=>String(r.id)===String(selectedReferralId));
@@ -8103,7 +8101,7 @@ function buildInterviewSheetHtml(r) {
         <h2>관계</h2>
         ${relationRows}
       </div>
-      <div class="ps-block ps-highlight">
+      <div class="ps-block">
         <h2>${isIntro ? '소개' : '추천'} 이유</h2>
         <div class="ps-v">${psText(items.recommendationReason)}</div>
       </div>
@@ -8539,31 +8537,41 @@ function renderReferralItemLine(items, key) {
 function renderConfirmChecksLine(items, keys) {
   const checked = keys.filter(k => items[k]);
   if(!checked.length) return '';
-  const chips = checked.map(k => `<span style="color:var(--green)">✓ ${esc(referralItemLabel(k))}</span>`).join('<span style="color:var(--muted);margin:0 6px">·</span>');
+  const conflictValues = Array.isArray(items.conflictTypes) ? items.conflictTypes : [];
+  const conflictNote = conflictValues.includes('친족')
+    ? `친족(${esc(items.conflictDetail || '관계 미기재')})`
+    : (conflictValues.length ? esc(conflictValues[0]) : '');
+  const chips = checked.map(k => {
+    const extra = (k === 'conflictConfirmed' && conflictNote) ? ` — ${conflictNote}` : '';
+    return `<span style="color:var(--green)">✓ ${esc(referralItemLabel(k))}${extra}</span>`;
+  }).join('<span style="color:var(--muted);margin:0 6px">·</span>');
   return `<p style="font-size:12px;margin-top:8px">${chips}</p>`;
+}
+function monthsBetweenYm(startStr, endStr) {
+  const m1 = /^(\d{4})-(\d{2})/.exec(startStr || '');
+  const m2 = /^(\d{4})-(\d{2})/.exec(endStr || '');
+  if(!m1 || !m2) return null;
+  const months = (Number(m2[1]) - Number(m1[1])) * 12 + (Number(m2[2]) - Number(m1[2])) + 1;
+  return months > 0 ? months : null;
 }
 function renderPeriodRangeLine(items, startKey, endKey, label) {
   const start = items[startKey], end = items[endKey];
   if(!start && !end) return '';
-  return `<p style="font-size:12px;margin-top:8px;line-height:1.55"><b>${esc(label)}</b><br>${esc(start||'-')} ~ ${esc(end||'-')}</p>`;
+  const months = monthsBetweenYm(start, end);
+  const suffix = months ? ` (${months}개월)` : '';
+  return `<p style="font-size:12px;margin-top:8px;line-height:1.55"><b>${esc(label)}</b><br>${esc(start||'-')} ~ ${esc(end||'-')}${suffix}</p>`;
 }
 function renderCandStatusLine(items) {
-  const parts = [];
-  if(items.candStatus) parts.push(esc(items.candStatus));
-  const conflictValues = Array.isArray(items.conflictTypes) ? items.conflictTypes : [];
-  if(conflictValues.includes('친족')) parts.push(`친족 (${esc(items.conflictDetail || '관계 미기재')})`);
-  else if(conflictValues.length) parts.push(esc(conflictValues[0]));
-  if(!parts.length) return '';
-  return `<p style="font-size:12px;margin-top:8px;color:var(--muted)">${parts.join('<span style="margin:0 6px">·</span>')}</p>`;
+  if(!items.candStatus) return '';
+  return `<p style="font-size:12px;margin-top:8px;color:var(--muted)">${esc(items.candStatus)}</p>`;
 }
 function renderReferralItemsSummary(items) {
-  const entryType = items.entryType === 'INTRODUCTION' ? '인재 소개서' : '사내추천서';
   const track = items.referralTrack;
   const isPersonal = track === 'PERSONAL_REFERRAL';
   const isIntro = items.entryType === 'INTRODUCTION' || track === 'TALENT_INTRO';
   const scopeKeys = isPersonal
-    ? ['workTypes','personalKnownPeriod','personalRelationType','recentContact']
-    : ['workTypes','workTask'];
+    ? ['personalKnownPeriod','personalRelationType','recentContact']
+    : ['workTask'];
   const mainKeys = isIntro
     ? ['introReason','knownCareer']
     : isPersonal
@@ -8574,10 +8582,10 @@ function renderReferralItemsSummary(items) {
   const ancientKeys = ['unknownHandling','mistakeHandling','feedbackHandling','proactiveCompletion','improvementPoint','difficultSituation','helpfulSupport','referenceSourceStatus','referenceSourceInfo','relationshipContext','strengths','collaborationEvidence','riskNotes'];
   const ancient = mainKeys.some(k=>items[k]) ? [] : ancientKeys;
   return `
-    <div class="b ${items.entryType==='INTRODUCTION'?'bamber':'bblue'}" style="margin:4px 0 6px">${entryType}</div>
+    ${renderReferralItemLine(items,'workTypes')}
+    ${renderCandStatusLine(items)}
     ${scopeKeys.map(k=>renderReferralItemLine(items,k)).join('')}
     ${!isPersonal ? renderPeriodRangeLine(items,'workPeriodStart','workPeriodEnd','같이 일한 기간') : ''}
-    ${renderCandStatusLine(items)}
     ${mainKeys.map(k=>renderReferralItemLine(items,k)).join('')}
     ${renderReferralItemLine(items,'recommendationReason')}
     ${renderConfirmChecksLine(items, confirmKeys)}
