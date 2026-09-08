@@ -180,7 +180,7 @@
         <p><span class="cand-name">OOO</span> 님이 우미건설 채용에 지원하시면서 귀하를 함께 일하셨던 분으로 알려 주셨습니다.</p>
         <p>본 설문은 함께 일했던 경험을 통해 <b><span class="cand-name">OOO</span> 님이 실제로 어떤 사람이고 어떤 방식으로 일했는지를 이해하기 위한 것</b>입니다.</p>
         <p>정답은 없으며, 직접 함께 일하며 보신 범위에서 편하게 답변해 주세요. 직접 확인하기 어려운 내용은 그렇게 표시해 주셔도 됩니다.</p>
-        <p class="muted-line">· 9문항, 15분 정도 걸립니다. 대부분 1~2문장이면 충분합니다.</p>
+        <p class="muted-line">· 12문항, 20분 정도 걸립니다. 대부분 1~2문장이면 충분합니다.</p>
         <p class="muted-line">· 직접 보실 기회가 없었던 내용은 추측해서 작성하지 마시고 「직접 확인할 기회가 많지 않았습니다」처럼 그대로 적어 주세요. 그렇게 적어 주시는 것이 <span class="cand-name">OOO</span> 님을 더 정확하게 이해하는 데 도움이 됩니다.</p>
         <p class="muted-line">· 작성해 주신 내용은 채용 목적의 제한된 내부자료로 관리되며 <span class="cand-name">OOO</span> 님께 일반적으로 제공되지 않습니다. 다만 법령에 따른 열람 등 권리행사 요청이 있으면 개인정보 담당부서의 검토와 절차에 따라 처리될 수 있습니다.</p>
       </div>
@@ -212,6 +212,14 @@
             <label class="opt-row"><input type="radio" name="q1_relation" value="기타" data-other-toggle="q1_relation_other">기타</label>
           </div>
           <input type="text" id="q1_relation_other" class="opt-other-input" placeholder="관계를 직접 입력해 주세요">
+
+          <div class="q-sub">함께 일한 빈도</div>
+          <div class="opt-list" data-radio-group="q1_frequency">
+            <label class="opt-row"><input type="radio" name="q1_frequency" value="거의 매일" required>거의 매일</label>
+            <label class="opt-row"><input type="radio" name="q1_frequency" value="주 1~2회">주 1~2회</label>
+            <label class="opt-row"><input type="radio" name="q1_frequency" value="월 1~2회">월 1~2회</label>
+            <label class="opt-row"><input type="radio" name="q1_frequency" value="사안이 있을 때">사안이 있을 때</label>
+          </div>
         </div>
 
         <!-- Q1-2 -->
@@ -346,6 +354,53 @@
             <summary>떠오르지 않으시면 예시 보기</summary>
             <p>꼼꼼한 · 체계적인 · 속도감 있는 · 주도적인 · 신중한 · 독립적인 · 유연한 · 차분한 · 원칙적인 · 도전적인 · 관계를 중시하는 · 결과를 중시하는</p>
           </details>
+        </div>
+
+        <!-- Q10 -->
+        <div class="q-card">
+          <div class="q-head"><span class="q-num">10</span><span class="q-title">일이 몰렸던 상황</span></div>
+          <p class="q-text">여러 일이 한꺼번에 몰렸거나 기한을 맞추기 어려워졌던 상황을 하나만 떠올려 주세요.</p>
+
+          <div class="q-sub">그때 <span class="cand-name">OOO</span> 님이 무엇부터 하셨나요?<span class="req-mark">*</span></div>
+          <textarea id="q10_firstAction" required></textarea>
+
+          <div class="q-sub"><span class="cand-name">OOO</span> 님은 주변에 언제, 어떻게 알리셨나요?<span class="req-mark">*</span></div>
+          <textarea id="q10_sharedTiming" required></textarea>
+          <p class="q-note">직접 보실 기회가 없었다면 그렇게 적어 주셔도 됩니다.</p>
+        </div>
+
+        <!-- Q11 -->
+        <div class="q-card">
+          <div class="q-head"><span class="q-num">11</span><span class="q-title">후배·팀원의 일이 막혔을 때</span></div>
+          <p class="q-text">후배나 팀원의 일이 막혔을 때 <span class="cand-name">OOO</span> 님의 평소 모습과 가장 가까운 것을 골라 주세요.</p>
+          <div class="opt-list" data-radio-group="q11_juniorSupportStyle">
+            <label class="opt-row"><input type="radio" name="q11_juniorSupportStyle" value="직접 처리해 주는 편" required>직접 처리해 주는 편</label>
+            <label class="opt-row"><input type="radio" name="q11_juniorSupportStyle" value="방법을 알려주고 후배·팀원이 하게 하는 편">방법을 알려주고 후배·팀원이 하게 하는 편</label>
+            <label class="opt-row"><input type="radio" name="q11_juniorSupportStyle" value="함께 보면서 진행하는 편">함께 보면서 진행하는 편</label>
+            <label class="opt-row"><input type="radio" name="q11_juniorSupportStyle" value="우선 스스로 해 보게 하고 필요할 때 돕는 편">우선 스스로 해 보게 하고 필요할 때 돕는 편</label>
+            <label class="opt-row"><input type="radio" name="q11_juniorSupportStyle" value="상황에 따라 달랐다">상황에 따라 달랐다</label>
+            <label class="opt-row"><input type="radio" name="q11_juniorSupportStyle" value="기타" data-other-toggle="q11_juniorSupportStyle_other">기타</label>
+            <label class="opt-row"><input type="radio" name="q11_juniorSupportStyle" value="직접 확인할 기회가 많지 않았음">직접 확인할 기회가 많지 않았음</label>
+          </div>
+          <input type="text" id="q11_juniorSupportStyle_other" class="opt-other-input" placeholder="상황에 따라 달랐다면 어떻게 달랐는지 간단히 적어 주세요">
+
+          <div class="q-sub">실제로 그렇게 하셨던 상황을 적어 주세요.<span class="req-mark">*</span></div>
+          <textarea id="q11_example" required></textarea>
+          <p class="q-note">어떤 일이 막혀 있었는지, 어떻게 개입했고 이후 어떻게 마무리됐는지 중심으로 적어 주세요.</p>
+        </div>
+
+        <!-- Q12 -->
+        <div class="q-card">
+          <div class="q-head"><span class="q-num">12</span><span class="q-title">퇴사 이유</span></div>
+          <p class="q-text"><span class="cand-name">OOO</span> 님이 회사를 떠난 이유에 대해 알고 계신 내용이 있나요?</p>
+          <div class="opt-list" data-radio-group="q12_exitReasonSource">
+            <label class="opt-row"><input type="radio" name="q12_exitReasonSource" value="본인에게서 직접 들었다">본인에게서 직접 들었다</label>
+            <label class="opt-row"><input type="radio" name="q12_exitReasonSource" value="주변을 통해 전해 들었다">주변을 통해 전해 들었다</label>
+            <label class="opt-row"><input type="radio" name="q12_exitReasonSource" value="알지 못한다 / 퇴사 시점에 함께 근무하지 않았다">알지 못한다 / 퇴사 시점에 함께 근무하지 않았다</label>
+          </div>
+          <div class="q-sub">알고 계신 내용</div>
+          <textarea id="q12_exitReasonDetail" class="compact"></textarea>
+          <p class="q-note">추측해서 적지는 말아 주세요. 아시는 범위만 적어 주시면 됩니다. 본 문항은 답변하지 않으셔도 됩니다.</p>
         </div>
 
         <!-- 응답자 정보 및 확인 -->
@@ -540,6 +595,7 @@
         q1_periodStart: getValue('q1_periodStart'),
         q1_periodEnd: getValue('q1_periodEnd'),
         q1_relation: getRadioOrOther('q1_relation', 'q1_relation_other'),
+        q1_frequency: getRadioValue('q1_frequency'),
         q1_2_mainTask: getValue('q1_2_mainTask'),
         q1_2_projectScale: getValue('q1_2_projectScale'),
         q1_2_soloVsShared: getValue('q1_2_soloVsShared'),
@@ -556,6 +612,12 @@
         q8_supportNeededAreas: getValue('q8_supportNeededAreas'),
         q9_word: getValue('q9_word'),
         q9_reason: getValue('q9_reason'),
+        q10_firstAction: getValue('q10_firstAction'),
+        q10_sharedTiming: getValue('q10_sharedTiming'),
+        q11_juniorSupportStyle: getRadioOrOther('q11_juniorSupportStyle', 'q11_juniorSupportStyle_other'),
+        q11_example: getValue('q11_example'),
+        q12_exitReasonSource: getRadioValue('q12_exitReasonSource'),
+        q12_exitReasonDetail: getValue('q12_exitReasonDetail'),
         respondentName: getValue('respondentName'),
         respondentAffiliation: getValue('respondentAffiliation'),
         respondentContact: getValue('respondentContact'),
@@ -581,6 +643,10 @@
       }
       if (getRadioValue('q1_relation') === '기타' && !getValue('q1_relation_other')) {
         showRequiredAlert(document.getElementById('q1_relation_other'), '관계를 직접 입력해 주세요.');
+        return false;
+      }
+      if (!getRadioValue('q1_frequency')) {
+        showRequiredAlert(document.querySelector('[data-radio-group="q1_frequency"]'), '함께 일한 빈도를 선택해 주세요.');
         return false;
       }
       if (!getValue('q1_2_mainTask') || !getValue('q1_2_projectScale') || !getValue('q1_2_soloVsShared')) {
@@ -649,6 +715,26 @@
       }
       if (!getValue('q9_reason')) {
         showRequiredAlert(document.getElementById('q9_reason'), '그렇게 표현하신 이유를 한 줄로 적어 주세요.');
+        return false;
+      }
+      if (!getValue('q10_firstAction')) {
+        showRequiredAlert(document.getElementById('q10_firstAction'), '10번 문항 ①을 적어 주세요. 직접 보신 적이 없으면 그렇게 적어 주세요.');
+        return false;
+      }
+      if (!getValue('q10_sharedTiming')) {
+        showRequiredAlert(document.getElementById('q10_sharedTiming'), '10번 문항 ②를 적어 주세요. 직접 보신 적이 없으면 그렇게 적어 주세요.');
+        return false;
+      }
+      if (!getRadioValue('q11_juniorSupportStyle')) {
+        showRequiredAlert(document.querySelector('[data-radio-group="q11_juniorSupportStyle"]'), '11번 문항의 선택지를 골라 주세요.');
+        return false;
+      }
+      if (getRadioValue('q11_juniorSupportStyle') === '기타' && !getValue('q11_juniorSupportStyle_other')) {
+        showRequiredAlert(document.getElementById('q11_juniorSupportStyle_other'), '11번 문항 내용을 직접 입력해 주세요.');
+        return false;
+      }
+      if (!getValue('q11_example')) {
+        showRequiredAlert(document.getElementById('q11_example'), '11-1번 문항을 적어 주세요. 직접 보신 적이 없으면 그렇게 적어 주세요.');
         return false;
       }
       if (!getValue('respondentName') || !getValue('respondentAffiliation') || !getValue('respondentContact')) {
